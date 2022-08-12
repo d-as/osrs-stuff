@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './App.css';
+import './App.scss';
 
 const increment = (value: number): number => value + 1;
 
