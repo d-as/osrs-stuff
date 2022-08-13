@@ -8,5 +8,5 @@ export default defineConfig({
     react(),
     eslint(),
   ],
-  base: '/osrs-vite/'
+  base: '/osrs-stuff/'
 });
