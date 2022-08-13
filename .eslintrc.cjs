@@ -32,7 +32,9 @@ module.exports = {
     '@typescript-eslint',
   ],
   rules: {
+    'arrow-parens': [ERROR, 'as-needed'],
     'import/prefer-default-export': OFF,
+    'no-console': OFF,
     'react/function-component-definition': [ERROR, {
       namedComponents: 'arrow-function',
       unnamedComponents: 'arrow-function',
