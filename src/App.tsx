@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import './App.scss';
 
+const { VITE_API_USER_AGENT } = import.meta.env;
+
 const OSRS_WIKI_API_URL = 'https://oldschool.runescape.wiki/api.php';
 
 enum Item {
@@ -52,10 +54,13 @@ export const App = () => {
 
   const fetchData = (): Promise<OSRSWikiImageResponse> => (
     new Promise((resolve, reject) => {
-      fetch(`${OSRS_WIKI_API_URL}?action=query&titles=${PAGE_TITLES.join('|')}&maxlag=5&format=json&prop=imageinfo&iiprop=url`, {
+      fetch(`${
+        OSRS_WIKI_API_URL
+      }?action=query&titles=${PAGE_TITLES.join('|')}&maxlag=5&format=json&prop=imageinfo&iiprop=url&origin=*`, {
         method: 'GET',
         headers: {
           'Accept-Encoding': 'gzip',
+          'Api-User-Agent': VITE_API_USER_AGENT,
         },
       })
         .then(response => response.json())
