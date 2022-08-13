@@ -85,7 +85,7 @@ export const App = () => {
 
   return (
     <div>
-      <h1>osrs-vite</h1>
+      <h1>osrs-stuff</h1>
       <div className="app-col">
         <button type="button" onClick={() => setCount(increment)}>
           {`Count is ${count}`}
@@ -94,9 +94,11 @@ export const App = () => {
           Test
         </button>
         <span className="app-row">
-          {items.map(item => (
-            <a key={item.pageid} href={item.imageinfo[0].descriptionurl} target="_blank" rel="noreferrer">
-              <img src={item.imageinfo[0].url} alt={item.title} />
+          {items.map(({ pageid, imageinfo: [info], title }) => (
+            <a key={pageid} href={info.descriptionurl} target="_blank" rel="noreferrer">
+              <button type="button">
+                <img src={info.url} alt={title} />
+              </button>
             </a>
           ))}
         </span>
