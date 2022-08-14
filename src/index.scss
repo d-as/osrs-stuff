@@ -5,18 +5,6 @@
   color-scheme: light dark;
   color: white;
   background-color: #242424;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-
-  &:hover {
-    color: #535bf2;
-  }
 }
 
 body {
@@ -51,14 +39,10 @@ button {
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
-  }
-
-  a:hover {
-    color: #747bff;
+    background-color: white;
   }
 
   button {
-    background-color: #f9f9f9;
+    background-color: #e9e9e9;
   }
 }

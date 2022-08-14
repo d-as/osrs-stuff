@@ -2,12 +2,6 @@ $item-button-size: 72px;
 $item-columns: 4;
 $item-grid-gap: .5rem;
 
-@mixin pixelated {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  image-rendering: -moz-crisp-edges;
-}
-
 #root {
   display: flex;
   flex-direction: column;

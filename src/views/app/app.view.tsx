@@ -1,7 +1,10 @@
 import { useState } from 'react';
-import '@views/App.scss';
+import { Assert } from '@/assert.util';
+import './app.view.scss';
 
 const { VITE_API_USER_AGENT } = import.meta.env;
+
+Assert.notEmpty(VITE_API_USER_AGENT);
 
 const OSRS_WIKI_URL = 'https://osrs.wiki';
 const OSRS_WIKI_API_URL = 'https://oldschool.runescape.wiki/api.php';
@@ -69,7 +72,7 @@ export const App = () => {
   );
 
   const convertFilenameToItemName = (filename: string): string => {
-    const [, name] = filename.match(/File:(.+).png/) as RegExpMatchArray;
+    const [, name] = Assert.defined(filename.match(/File:(.+).png/));
     return name;
   };
 
