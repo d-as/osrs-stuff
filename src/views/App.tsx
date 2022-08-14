@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './App.scss';
+import '@views/App.scss';
 
 const { VITE_API_USER_AGENT } = import.meta.env;
 
@@ -103,9 +103,14 @@ export const App = () => {
           {items.map(({ pageid, imageinfo: [info], title }) => {
             const name = convertFilenameToItemName(title);
             return (
-              <a key={pageid} href={`${OSRS_WIKI_URL}/${name.replaceAll(' ', '_')}`} target="_blank" rel="noreferrer">
+              <a
+                key={pageid}
+                href={`${OSRS_WIKI_URL}/${name.replaceAll(' ', '_')}`}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
                 <button type="button" className="app-icon-button" title={name}>
-                  <img src={info.url} alt={name} />
+                  <img src={info.url} alt={name} draggable="false" />
                 </button>
               </a>
             );

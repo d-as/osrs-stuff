@@ -30,14 +30,31 @@ module.exports = {
   plugins: [
     'react',
     '@typescript-eslint',
+    'import',
   ],
   rules: {
     'arrow-parens': [ERROR, 'as-needed'],
+    'import/no-unresolved': ERROR,
     'import/prefer-default-export': OFF,
     'no-console': OFF,
     'react/function-component-definition': [ERROR, {
       namedComponents: 'arrow-function',
       unnamedComponents: 'arrow-function',
     }],
+  },
+  settings: {
+    'import/parsers': {
+      '@typescript-eslint/parser': ['.ts', '.tsx'],
+    },
+    'import/resolver': {
+      alias: {
+        map: [
+          ['@', './src'],
+          ['@components', './src/components'],
+          ['@views', './src/views'],
+        ],
+        extensions: ['.ts', '.tsx'],
+      },
+    },
   },
 };

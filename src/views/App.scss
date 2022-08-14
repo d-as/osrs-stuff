@@ -2,6 +2,12 @@ $item-button-size: 72px;
 $item-columns: 4;
 $item-grid-gap: .5rem;
 
+@mixin pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+}
+
 #root {
   display: flex;
   flex-direction: column;
@@ -15,12 +21,12 @@ $item-grid-gap: .5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .5rem;
+  gap: $item-grid-gap;
 }
 
 .app-grid {
   display: grid;
-  gap: .5rem;
+  gap: $item-grid-gap;
   grid-template-columns: repeat($item-columns, $item-button-size);
 
   button {
@@ -37,6 +43,7 @@ $item-grid-gap: .5rem;
   &:hover {
     img {
       filter: drop-shadow(4px 4px 4px black);
+      transition: filter 0.25s;
     }
   }
 }
