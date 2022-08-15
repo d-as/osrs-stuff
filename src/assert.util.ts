@@ -5,7 +5,7 @@ const defined = <T>(value?: T | null, message?: string): T => {
   return value;
 };
 
-const notEmpty = (value?: string, message?: string): string => {
+const notEmpty = <T extends string | Array<U>, U>(value?: T | null, message?: string): T => {
   const definedValue = defined(value);
 
   if (definedValue.length === 0) {

@@ -8,6 +8,14 @@ Assert.notEmpty(VITE_API_USER_AGENT);
 
 const OSRS_WIKI_URL = 'https://osrs.wiki';
 const OSRS_WIKI_API_URL = 'https://oldschool.runescape.wiki/api.php';
+const EXCHANGE_API_URL = 'https://api.weirdgloop.org/exchange/history/osrs/latest';
+
+enum MoneyMultiplier {
+  ONE = '',
+  BILLION = 'B',
+  MILLION = 'M',
+  THOUSAND = 'K',
+}
 
 enum CoXUnique {
   DEXTEROUS_PRAYER_SCROLL = 'Dexterous prayer scroll',
@@ -24,11 +32,9 @@ enum CoXUnique {
   TWISTED_BOW = 'Twisted bow',
 }
 
-const COX_UNIQUES = Object.values(CoXUnique);
+const COX_UNIQUES = Object.values(CoXUnique).sort((a, b) => a.localeCompare(b));
 
-const COX_PAGE_TITLES = COX_UNIQUES
-  .map(item => `File:${item}.png`)
-  .sort((a, b) => a.localeCompare(b));
+const COX_PAGE_TITLES = COX_UNIQUES.map(item => `File:${item}.png`);
 
 interface OSRSWikiImageInfo {
   descriptionshorturl: string
@@ -50,15 +56,42 @@ interface OSRSWikiImageResponse {
   }
 }
 
+interface ExchangePrice {
+  id: string
+  timestamp: string
+  price: number
+  volume: number | null
+}
+
+interface ExchangeResponse {
+  [name: string]: ExchangePrice
+}
+
 export const App = () => {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<OSRSWikiImagePage[]>([]);
+  const [prices, setPrices] = useState<Partial<Record<CoXUnique, ExchangePrice>>>({});
 
-  const fetchData = (): Promise<OSRSWikiImageResponse> => (
+  const fetchItemImages = (): Promise<OSRSWikiImageResponse> => (
     new Promise((resolve, reject) => {
       fetch(`${
         OSRS_WIKI_API_URL
       }?action=query&titles=${COX_PAGE_TITLES.join('|')}&maxlag=5&format=json&prop=imageinfo&iiprop=url&origin=*`, {
+        method: 'GET',
+        headers: {
+          'Accept-Encoding': 'gzip',
+          'Api-User-Agent': VITE_API_USER_AGENT,
+        },
+      })
+        .then(response => response.json())
+        .then(resolve)
+        .catch(reject);
+    })
+  );
+
+  const fetchItemPrices = (): Promise<ExchangeResponse> => (
+    new Promise((resolve, reject) => {
+      fetch(`${EXCHANGE_API_URL}?name=${COX_UNIQUES.join('|')}`, {
         method: 'GET',
         headers: {
           'Accept-Encoding': 'gzip',
@@ -83,12 +116,53 @@ export const App = () => {
       COX_UNIQUES.indexOf(convertFilenameToItemName(title) as CoXUnique)
     );
 
-    fetchData()
+    fetchItemImages()
       .then(({ query: { pages } }) => setItems(
         Object.values(pages).sort((a, b) => compareCoXPage(a) - compareCoXPage(b)),
       ))
       .catch(console.error)
       .finally(() => setLoading(false));
+  };
+
+  const fetchPrices = () => {
+    setLoading(true);
+
+    fetchItemPrices()
+      .then(data => setPrices(data))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  };
+
+  const formatPrice = (price: number): [string, string, MoneyMultiplier] => {
+    let multiplier: MoneyMultiplier = MoneyMultiplier.ONE;
+    let truncatedPrice = price;
+
+    if (price > 1e9) {
+      multiplier = MoneyMultiplier.BILLION;
+      truncatedPrice /= 1e9;
+    } else if (price > 1e6) {
+      multiplier = MoneyMultiplier.MILLION;
+      truncatedPrice /= 1e6;
+    } else if (price > 1e3) {
+      multiplier = MoneyMultiplier.THOUSAND;
+      truncatedPrice /= 1e3;
+    }
+
+    return [
+      new Intl.NumberFormat('en-GB').format(price),
+      new Intl.NumberFormat('en-GB', { maximumSignificantDigits: 3 }).format(truncatedPrice),
+      multiplier,
+    ];
+  };
+
+  const getPriceClassName = (price: number): string => {
+    if (price >= 10e6) {
+      return 'price-green';
+    }
+    if (price >= 100e3) {
+      return 'price-white';
+    }
+    return 'price-yellow';
   };
 
   return (
@@ -102,7 +176,15 @@ export const App = () => {
         >
           Fetch Items
         </button>
-        <span className="app-grid">
+        <button
+          type="button"
+          className="app-button"
+          disabled={loading || Object.keys(prices).length > 0}
+          onClick={() => fetchPrices()}
+        >
+          Fetch Prices
+        </button>
+        <div className="app-grid">
           {items.map(({ pageid, imageinfo: [info], title }) => {
             const name = convertFilenameToItemName(title);
             return (
@@ -118,7 +200,27 @@ export const App = () => {
               </a>
             );
           })}
-        </span>
+        </div>
+        <div className="app-row">
+          {Object.keys(prices).length > 0 && (
+            <div className="app-prices">
+              {Object.entries(prices)
+                .sort(([, a], [, b]) => b.price - a.price)
+                .map(([name, { id, price }]) => {
+                  const [formattedPrice, truncatedPrice, multiplier] = formatPrice(price);
+                  return (
+                    <span key={id} className="app-row">
+                      <span className="price">{name}</span>
+                      <span title={formattedPrice} className={getPriceClassName(price)}>
+                        <span>{truncatedPrice}</span>
+                        <strong>{multiplier}</strong>
+                      </span>
+                    </span>
+                  );
+                })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
