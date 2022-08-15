@@ -1,4 +1,5 @@
 $item-button-size: 72px;
+$item-price-button-size: calc($item-button-size * 2);
 $item-columns: 4;
 $item-grid-gap: .5rem;
 
@@ -23,6 +24,7 @@ $item-grid-gap: .5rem;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  align-items: center;
   width: 100%;
 }
 
@@ -35,10 +37,19 @@ $item-grid-gap: .5rem;
     width: $item-button-size;
     height: $item-button-size;
   }
+
+  &-prices {
+    @extend .app-grid;
+    grid-template-columns: repeat($item-columns, $item-price-button-size);
+
+    button {
+      width: 100%;
+    }
+  }
 }
 
 .app-button {
-  width: calc($item-columns * $item-button-size + ($item-columns - 1) * $item-grid-gap);
+  width: 100%;
 }
 
 .app-icon-button {

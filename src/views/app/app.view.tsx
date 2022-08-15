@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { Assert } from '@/assert.util';
 import './app.view.scss';
 
@@ -32,9 +32,9 @@ enum CoXUnique {
   TWISTED_BOW = 'Twisted bow',
 }
 
-const COX_UNIQUES = Object.values(CoXUnique).sort((a, b) => a.localeCompare(b));
+const COX_UNIQUES_SORTED = Object.values(CoXUnique).sort((a, b) => a.localeCompare(b));
 
-const COX_PAGE_TITLES = COX_UNIQUES.map(item => `File:${item}.png`);
+const COX_PAGE_TITLES = COX_UNIQUES_SORTED.map(item => `File:${item}.png`);
 
 interface OSRSWikiImageInfo {
   descriptionshorturl: string
@@ -91,7 +91,7 @@ export const App = () => {
 
   const fetchItemPrices = (): Promise<ExchangeResponse> => (
     new Promise((resolve, reject) => {
-      fetch(`${EXCHANGE_API_URL}?name=${COX_UNIQUES.join('|')}`, {
+      fetch(`${EXCHANGE_API_URL}?name=${COX_UNIQUES_SORTED.join('|')}`, {
         method: 'GET',
         headers: {
           'Accept-Encoding': 'gzip',
@@ -113,7 +113,7 @@ export const App = () => {
     setLoading(true);
 
     const compareCoXPage = ({ title }: OSRSWikiImagePage): number => (
-      COX_UNIQUES.indexOf(convertFilenameToItemName(title) as CoXUnique)
+      Object.values(CoXUnique).indexOf(convertFilenameToItemName(title) as CoXUnique)
     );
 
     fetchItemImages()
@@ -165,6 +165,19 @@ export const App = () => {
     return 'price-yellow';
   };
 
+  const getPriceElement = (name: string, id: string, price: number, showName = true) => {
+    const [formattedPrice, truncatedPrice, multiplier] = formatPrice(price);
+    return (
+      <span key={id} className="app-row">
+        {showName && <span className="price">{name}</span>}
+        <span title={formattedPrice} className={getPriceClassName(price)}>
+          <span>{truncatedPrice}</span>
+          <strong>{multiplier}</strong>
+        </span>
+      </span>
+    );
+  };
+
   return (
     <div>
       <div className="app-col">
@@ -184,9 +197,16 @@ export const App = () => {
         >
           Fetch Prices
         </button>
-        <div className="app-grid">
+        <div className={Object.keys(prices).length > 0 ? 'app-grid-prices' : 'app-grid'}>
           {items.map(({ pageid, imageinfo: [info], title }) => {
-            const name = convertFilenameToItemName(title);
+            const name = convertFilenameToItemName(title) as CoXUnique;
+            let priceElement: ReactNode;
+
+            if (Object.keys(prices).length > 0) {
+              const { id, price } = Assert.defined(prices[name]);
+              priceElement = getPriceElement(name, id, price, false);
+            }
+
             return (
               <a
                 key={pageid}
@@ -195,29 +215,21 @@ export const App = () => {
                 rel="noreferrer noopener"
               >
                 <button type="button" className="app-icon-button" title={name}>
-                  <img src={info.url} alt={name} draggable="false" />
+                  <span className={Object.keys(prices).length > 0 ? 'app-row' : ''}>
+                    <img src={info.url} alt={name} draggable="false" />
+                    <span>{priceElement}</span>
+                  </span>
                 </button>
               </a>
             );
           })}
         </div>
         <div className="app-row">
-          {Object.keys(prices).length > 0 && (
+          {items.length === 0 && Object.keys(prices).length > 0 && (
             <div className="app-prices">
               {Object.entries(prices)
                 .sort(([, a], [, b]) => b.price - a.price)
-                .map(([name, { id, price }]) => {
-                  const [formattedPrice, truncatedPrice, multiplier] = formatPrice(price);
-                  return (
-                    <span key={id} className="app-row">
-                      <span className="price">{name}</span>
-                      <span title={formattedPrice} className={getPriceClassName(price)}>
-                        <span>{truncatedPrice}</span>
-                        <strong>{multiplier}</strong>
-                      </span>
-                    </span>
-                  );
-                })}
+                .map(([name, { id, price }]) => getPriceElement(name, id, price))}
             </div>
           )}
         </div>
