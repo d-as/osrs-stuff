@@ -116,19 +116,14 @@ export const App = () => {
       Object.values(CoXUnique).indexOf(convertFilenameToItemName(title) as CoXUnique)
     );
 
-    fetchItemImages()
-      .then(({ query: { pages } }) => setItems(
-        Object.values(pages).sort((a, b) => compareCoXPage(a) - compareCoXPage(b)),
-      ))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  };
-
-  const fetchPrices = () => {
-    setLoading(true);
-
-    fetchItemPrices()
-      .then(data => setPrices(data))
+    Promise.all([
+      fetchItemImages(),
+      fetchItemPrices(),
+    ])
+      .then(([{ query: { pages } }, priceData]) => {
+        setItems(Object.values(pages).sort((a, b) => compareCoXPage(a) - compareCoXPage(b)));
+        setPrices(priceData);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   };
@@ -155,15 +150,14 @@ export const App = () => {
     ];
   };
 
-  const getPriceClassName = (price: number): string => {
-    if (price >= 10e6) {
-      return 'price-green';
-    }
-    if (price >= 100e3) {
-      return 'price-white';
-    }
-    return 'price-yellow';
-  };
+  const getPriceClassName = (price: number): string => (
+    `price-${(() => {
+      if (price >= 10e6) {
+        return 'green';
+      }
+      return price >= 100e3 ? 'white' : 'yellow';
+    })()}`
+  );
 
   const getPriceElement = (name: string, id: string, price: number, showName = true) => {
     const [formattedPrice, truncatedPrice, multiplier] = formatPrice(price);
@@ -183,21 +177,13 @@ export const App = () => {
       <div className="app-col">
         <button
           type="button"
-          className="app-button"
+          className="w-100"
           disabled={loading || items.length > 0}
           onClick={() => fetchItems()}
         >
           Fetch Items
         </button>
-        <button
-          type="button"
-          className="app-button"
-          disabled={loading || Object.keys(prices).length > 0}
-          onClick={() => fetchPrices()}
-        >
-          Fetch Prices
-        </button>
-        <div className={Object.keys(prices).length > 0 ? 'app-grid-prices' : 'app-grid'}>
+        <div className="app-grid">
           {items.map(({ pageid, imageinfo: [info], title }) => {
             const name = convertFilenameToItemName(title) as CoXUnique;
             let priceElement: ReactNode;
@@ -210,28 +196,19 @@ export const App = () => {
             return (
               <a
                 key={pageid}
+                className="app-icon-button"
+                title={name}
                 href={`${OSRS_WIKI_URL}/${name.replaceAll(' ', '_')}`}
                 target="_blank"
                 rel="noreferrer noopener"
               >
-                <button type="button" className="app-icon-button" title={name}>
-                  <span className={Object.keys(prices).length > 0 ? 'app-row' : ''}>
-                    <img src={info.url} alt={name} draggable="false" />
-                    <span>{priceElement}</span>
-                  </span>
-                </button>
+                <span className="app-row">
+                  <img src={info.url} alt={name} draggable="false" />
+                  <span>{priceElement}</span>
+                </span>
               </a>
             );
           })}
-        </div>
-        <div className="app-row">
-          {items.length === 0 && Object.keys(prices).length > 0 && (
-            <div className="app-prices">
-              {Object.entries(prices)
-                .sort(([, a], [, b]) => b.price - a.price)
-                .map(([name, { id, price }]) => getPriceElement(name, id, price))}
-            </div>
-          )}
         </div>
       </div>
     </div>

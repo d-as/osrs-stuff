@@ -1,6 +1,6 @@
-$item-button-size: 72px;
-$item-price-button-size: calc($item-button-size * 2);
-$item-columns: 4;
+@use 'src/styles/styles.scss' as styles;
+
+$item-button-size: 144px;
 $item-grid-gap: .5rem;
 
 #root {
@@ -8,64 +8,43 @@ $item-grid-gap: .5rem;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 100%;
   text-align: center;
+  width: 100%;
 }
 
 .app-col {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: $item-grid-gap;
-  width: 100%;
 }
 
 .app-row {
   display: flex;
-  flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
 }
 
 .app-grid {
   display: grid;
   gap: $item-grid-gap;
-  grid-template-columns: repeat($item-columns, $item-button-size);
+  grid-template-columns: $item-button-size;
 
-  button {
-    width: $item-button-size;
-    height: $item-button-size;
-  }
-
-  &-prices {
-    @extend .app-grid;
-    grid-template-columns: repeat($item-columns, $item-price-button-size);
-
-    button {
-      width: 100%;
+  @for $i from 2 through 4 {
+    @media (min-width: calc($item-button-size * $i + $item-grid-gap * ($i + 1))) {
+      grid-template-columns: repeat($i, $item-button-size);
     }
   }
 }
 
-.app-button {
-  width: 100%;
-}
-
 .app-icon-button {
+  @include styles.button;
+
   &:hover {
     img {
       filter: drop-shadow(4px 4px 4px black);
       transition: filter 0.25s;
     }
   }
-}
-
-.app-prices {
-  width: 100%;
-  border-radius: 8px;
-  padding: 0.6em 1.2em;
-  background-color: #1a1a1a;
 }
 
 .price {
