@@ -1,10 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Assert } from '@/assert.util';
+import { fetchData } from '@/fetch.util';
 import './app.view.scss';
-
-const { VITE_API_USER_AGENT } = import.meta.env;
-
-Assert.notEmpty(VITE_API_USER_AGENT);
 
 const OSRS_WIKI_URL = 'https://osrs.wiki';
 const OSRS_WIKI_API_URL = 'https://oldschool.runescape.wiki/api.php';
@@ -71,37 +68,18 @@ export const App = () => {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<OSRSWikiImagePage[]>([]);
   const [prices, setPrices] = useState<Partial<Record<CoXUnique, ExchangePrice>>>({});
+  const [showNames, setShowNames] = useState(true);
 
   const fetchItemImages = (): Promise<OSRSWikiImageResponse> => (
-    new Promise((resolve, reject) => {
-      fetch(`${
-        OSRS_WIKI_API_URL
-      }?action=query&titles=${COX_PAGE_TITLES.join('|')}&maxlag=5&format=json&prop=imageinfo&iiprop=url&origin=*`, {
-        method: 'GET',
-        headers: {
-          'Accept-Encoding': 'gzip',
-          'Api-User-Agent': VITE_API_USER_AGENT,
-        },
-      })
-        .then(response => response.json())
-        .then(resolve)
-        .catch(reject);
-    })
+    fetchData(`${
+      OSRS_WIKI_API_URL
+    }?action=query&titles=${
+      COX_PAGE_TITLES.join('|')
+    }&maxlag=5&format=json&prop=imageinfo&iiprop=url&origin=*`)
   );
 
   const fetchItemPrices = (): Promise<ExchangeResponse> => (
-    new Promise((resolve, reject) => {
-      fetch(`${EXCHANGE_API_URL}?name=${COX_UNIQUES_SORTED.join('|')}`, {
-        method: 'GET',
-        headers: {
-          'Accept-Encoding': 'gzip',
-          'Api-User-Agent': VITE_API_USER_AGENT,
-        },
-      })
-        .then(response => response.json())
-        .then(resolve)
-        .catch(reject);
-    })
+    fetchData(`${EXCHANGE_API_URL}?name=${COX_UNIQUES_SORTED.join('|')}`)
   );
 
   const convertFilenameToItemName = (filename: string): string => {
@@ -159,11 +137,18 @@ export const App = () => {
     })()}`
   );
 
-  const getPriceElement = (name: string, id: string, price: number, showName = true) => {
+  const getPriceElement = (name: CoXUnique): ReactNode => {
+    const exchangePrice = prices[name];
+
+    if (!exchangePrice) {
+      return null;
+    }
+
+    const { price, id } = exchangePrice;
     const [formattedPrice, truncatedPrice, multiplier] = formatPrice(price);
+
     return (
       <span key={id} className="app-row">
-        {showName && <span className="price">{name}</span>}
         <span title={formattedPrice} className={getPriceClassName(price)}>
           <span>{truncatedPrice}</span>
           <strong>{multiplier}</strong>
@@ -175,23 +160,28 @@ export const App = () => {
   return (
     <div>
       <div className="app-col">
-        <button
-          type="button"
-          className="w-100"
-          disabled={loading || items.length > 0}
-          onClick={() => fetchItems()}
-        >
-          Fetch Items
-        </button>
-        <div className="app-grid">
+        <span className="app-row">
+          <button
+            type="button"
+            className="w-100"
+            disabled={loading || items.length > 0}
+            onClick={() => fetchItems()}
+          >
+            Fetch Items
+          </button>
+          <button
+            type="button"
+            className="w-100"
+            disabled={items.length === 0}
+            onClick={() => setShowNames(show => !show)}
+          >
+            {`${showNames ? 'Hide' : 'Show'} Names`}
+          </button>
+        </span>
+        <div className={`app-grid ${showNames ? 'app-grid-wide' : ''}`}>
           {items.map(({ pageid, imageinfo: [info], title }) => {
-            const name = convertFilenameToItemName(title) as CoXUnique;
-            let priceElement: ReactNode;
-
-            if (Object.keys(prices).length > 0) {
-              const { id, price } = Assert.defined(prices[name]);
-              priceElement = getPriceElement(name, id, price, false);
-            }
+            const name = convertFilenameToItemName(title);
+            const priceElement = getPriceElement(name as CoXUnique);
 
             return (
               <a
@@ -203,9 +193,12 @@ export const App = () => {
                 rel="noreferrer noopener"
               >
                 <span className="app-row">
-                  <img src={info.url} alt={name} draggable="false" />
-                  <span>{priceElement}</span>
+                  <span className="icon-wrapper">
+                    <img src={info.url} alt={name} draggable="false" />
+                  </span>
+                  {showNames && <span className="price">{name}</span>}
                 </span>
+                <span>{priceElement}</span>
               </a>
             );
           })}
